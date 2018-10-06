@@ -1,6 +1,7 @@
-import cv2
-from multiprocessing import Process, Queue, cpu_count
 from math import ceil
+from multiprocessing import Process, Queue, cpu_count
+
+import cv2
 
 
 class GrabVideoMP:
@@ -15,36 +16,18 @@ class GrabVideoMP:
         self._cap.release()
         cv2.destroyAllWindows()
 
-    def int_min_max(self, val1, val2):
+    def _int_min_max(self, val1, val2):
         if val1 >= val2:
             return val2, val1
         else:
             return val1, val2
 
-    def _set_frame_size(self):
-        self._frame_size = self.get_width() * self.get_height()
+    def set_resolution(self, width, height):
+        self._cap.set(3, width)
+        self._cap.set(4, height)
+        self._frame_size = width * height
 
-    def get_width(self):
-        return self._cap.get(3)
-
-    def set_width(self, value):
-        #  ToDo: add validation
-        self._cap.set(3, value)
-        self._set_frame_size()
-
-    def get_height(self):
-        return self._cap.get(4)
-
-    def set_height(self, value):
-        #  ToDo: add validation
-        self._cap.set(4, value)
-        self._set_frame_size()
-
-    def open_cap(self):
-        if not self._cap.isOpened():
-            self._cap.open()
-
-    def are_tuple_items_colors(self, tuple_obj: list, int_min=0,
+    def _are_tuple_items_colors(self, tuple_obj: list, int_min=0,
                                    int_max=256, tuple_len=3):
         if not isinstance(tuple_obj, tuple) or len(tuple_obj) != tuple_len:
             return False
@@ -58,17 +41,17 @@ class GrabVideoMP:
                 color2, tuple) or len(color2) != 3:
             return False
 
-        if not self.are_tuple_items_colors(
-                    color1) or not self.are_tuple_items_colors(color2):
+        if not self._are_tuple_items_colors(
+                    color1) or not self._are_tuple_items_colors(color2):
             return False
 
         self._filter = dict()
-        self._filter['min_red'], self._filter['max_red'] = self.int_min_max(color1[0], color2[0])
-        self._filter['min_green'], self._filter['max_green'] = self.int_min_max(color1[1], color2[1])
-        self._filter['min_blue'], self._filter['max_blue'] = self.int_min_max(color1[2], color2[2])
+        self._filter['min_red'], self._filter['max_red'] = self._int_min_max(color1[0], color2[0])
+        self._filter['min_green'], self._filter['max_green'] = self._int_min_max(color1[1], color2[1])
+        self._filter['min_blue'], self._filter['max_blue'] = self._int_min_max(color1[2], color2[2])
         return True
 
-    def are_colors_in_range(self, bgr: tuple):
+    def _are_colors_in_range(self, bgr: tuple):
         if bgr[0] >= self._filter['min_blue'] and \
                 bgr[0] <= self._filter['max_blue'] and \
                 bgr[1] >= self._filter['min_green'] and \
@@ -79,13 +62,13 @@ class GrabVideoMP:
         else:
             return 0
 
-    def mp_pixels_in_frame(self, frame, proc_count):
+    def _mp_pixels_in_frame(self, frame, proc_count):
         def worker(frame, out_q):
 
             pixels = 0
             for i in range(len(frame)):
                 for j in range(len(frame[i])):
-                    pixels += self.are_colors_in_range(frame[i][j])
+                    pixels += self._are_colors_in_range(frame[i][j])
             out_q.put(pixels)
 
         out_q = Queue()
@@ -109,8 +92,22 @@ class GrabVideoMP:
         return pixel_count
 
     def count_pixels(self):
+        '''
+        Pixel count in frame from video input, that are in range of filter
+        colors (including borders)
+        If filter is not set, count returns 1 without reading a frame.
+        :return:
+        % of pixels, what pass the filter in current frame
+        '''
         if self._filter is None:
-            return False
+            return 1.0
         ret, frame = self._cap.read()
-        pixel_count = self.mp_pixels_in_frame(frame, cpu_count())
-        return  pixel_count / (self._frame_size / 100)
+        pixel_count = self._mp_pixels_in_frame(frame, cpu_count())
+        return  pixel_count / (self._frame_size / 100.0)
+
+    '''
+    # if problems with closed cam occur
+    def open_cap(self):
+        if not self._cap.isOpened():
+            self._cap.open()
+    '''
