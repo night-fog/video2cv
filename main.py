@@ -1,9 +1,11 @@
 from datetime import datetime
 import logging
 
-from grab_video_mp import GrabVideoMP
+#from grab_video_mp import GrabVideoMP
+from grab_video import GrabVideo
 
 import conf
+from data2midi import Data2Midi
 
 
 def init_log():
@@ -17,12 +19,15 @@ def init_log():
 
 if __name__ == '__main__':
     log = init_log()
-    vid = GrabVideoMP(conf.VIDEO_DEVICE_ID)
+    vid = GrabVideo(conf.VIDEO_DEVICE_ID)
     vid.set_resolution(conf.VIDEO_WIDTH, conf.VIDEO_HEIGHT)
-    vid.set_color_range_filter(conf.VIDEO_FILTER_COLOR1, conf.VIDEO_FILTER_COLOR1)
-    count_cycles = 100
-    print(f'Start: {datetime.now()}')
-    for i in range(count_cycles):
-        print(str(datetime.now()) + ' ' + str(vid.count_pixels()))
-    print(f'End: {datetime.now()}')
+    assert vid.set_rgb_color(conf.VIDEO_FILTER_COLOR), 'Filter RGB color was not set'
+    assert vid.set_color_delta(conf.VIDEO_HUE_DELTA,
+                               conf.VIDEO_SATURATION_DELTA,
+                               conf.VIDEO_VALUE_DELTA), 'Wrong delta set'
+    midi_out = Data2Midi()
+    default_velocity = 127
+    while(True):
+        midi_out.send_midi_note(Data2Midi.float_to_127(vid.count_pixels()), default_velocity)
+    midi_out.stop_all()
     vid.__del__()
