@@ -28,5 +28,5 @@ if __name__ == '__main__':
     while(True):
         midi_out.send_midi_cc(Data2Midi.float_to_127(vid.count_pixels()))
         #midi_out.send_midi_note(Data2Midi.float_to_127(vid.count_pixels()), default_velocity)
-    midi_out.stop_all()
+    #midi_out.stop_all()
     vid.__del__()

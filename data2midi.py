@@ -57,7 +57,5 @@ class Data2Midi:
                       value=value)
         self._port.send(msg)
 
-    def stop_all(self):
-        if self._port:
-            for i in range(128):
-                self._port.send(Message('note_off', note=i))
+    def notes_off_all(self):
+        self._port.send(Message('control_change', control=123, value=0))
