@@ -13,10 +13,18 @@ class GrabVideo:
     _filter_max = None
     _frame_size = None
     _rgb_color = [0, 0, 0]
-    _delta = 0
+    _hue_delta = 0
     _fps_data = {
         'start' : None,
         'frames': 0
+    }
+    _saturation = {
+        'low': 0,
+        'high': 256
+    }
+    _value = {
+        'low': 0,
+        'high': 256
     }
 
     def __init__(self, camera_id=0, debug=False):
@@ -74,22 +82,26 @@ class GrabVideo:
 
     def _color2hsv_delta(self):
         hsv = cv2.cvtColor(np.uint8([[self._rgb_color]]), cv2.COLOR_BGR2HSV)[0][0]
-        self._filter_min = np.array([self.limit_colors((hsv[0] - self._delta.get('hue'))),
-                                     self.limit_colors((hsv[1] - self._delta.get('saturation'))),
-                                     self.limit_colors((hsv[2] - self._delta.get('value')))])
-        self._filter_max = np.array([self.limit_colors((hsv[0] + self._delta.get('hue'))),
-                                     self.limit_colors((hsv[1] + self._delta.get('saturation'))),
-                                     self.limit_colors((hsv[2] + self._delta.get('value')))])
+        self._filter_min = np.array([self.limit_colors((hsv[0] - self._hue_delta)),
+                                     self.limit_colors((self._saturation.get('low'))),
+                                     self.limit_colors((self._value.get('low')))])
+        self._filter_max = np.array([self.limit_colors((hsv[0] + self._hue_delta)),
+                                     self.limit_colors((self._saturation.get('high'))),
+                                     self.limit_colors((self._value.get('high')))])
 
-
-    def set_color_delta(self, hue_delta: int, saturation_delta: int, value_delta: int):
-        if not self._are_tuple_items_colors((hue_delta, saturation_delta, value_delta)):
-            return False
-        self._delta = {
-            'hue' : hue_delta,
-            'saturation' : saturation_delta,
-            'value' : value_delta
-        }
+    def set_color_delta(self, hue_delta: int = -1, saturation_low: int = -1,
+                            saturation_high: int = -1, value_low: int = -1,
+                            value_high: int = -1):
+        if hue_delta != -1:
+            self._hue_delta = hue_delta
+        if saturation_low != -1 and (saturation_low < self._saturation['high']):
+            self._saturation['low'] = saturation_low
+        if saturation_high != -1 and (saturation_high > self._saturation['low']):
+            self._saturation['high'] = saturation_high
+        if value_low != -1 and (value_low < self._value['high']):
+            self._value['low'] = value_low
+        if value_high != -1 and (value_high > self._value['low']):
+            self._value['high'] = value_high
         self._color2hsv_delta()
         return True
 
