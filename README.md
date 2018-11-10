@@ -30,6 +30,6 @@ https://trello.com/b/tQVCnvNn
 В данный момент есть два варианта развития событий:  
 * Отправить MIDI-ноту:  
 ```midi_out.send_midi_note(vid.count_pixels(), 127)```, где второй параметр
-метода send_midi_note задает значение velocity ноты.  
+метода send_midi_note задает значение velocity ноты int [0, 127].  
 * Отправить управляющий MIDI-сигнал:  
 ```midi_out.send_midi_cc(vid.count_pixels())```  

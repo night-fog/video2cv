@@ -10,9 +10,11 @@ class Data2Midi:
     _notes_on = []
     _control_channel = None
 
-    def __init__(self, control_channel=1, virtual=True):
-        #  @ToDo: how can i set MIDI-port?
-        self._port = mido.open_output('video2midi', virtual=virtual)
+    def __init__(self, control_channel=1, midi_out_name=False):
+        if midi_out_name is False:
+            self._port = mido.open_output('video2midi', virtual=True)
+        else:
+            self._port = mido.open_output(midi_out_name)
         self.set_control_channel(control_channel)
 
     def __del__(self):
@@ -25,6 +27,10 @@ class Data2Midi:
             raise ValueError('Whong channel number. Must be between 1 and 127')
         else:
             self._control_channel = value
+
+    @staticmethod
+    def get_midi_out_list():
+        return mido.get_output_names()
 
     @staticmethod
     def float_to_midi(float_val):
@@ -41,12 +47,11 @@ class Data2Midi:
             return round(int_value)
 
     def send_midi_note(self, note, value):
-        note = self.int_to_midi(note)
+        note = self.float_to_midi(note)
         value = self.int_to_midi(value)
-        if note not in self._notes_on:
-            self._notes_on.append(note)
-            msg = Message('note_on', note=note, velocity=value)
-            self._port.send(msg)
+        self.notes_off_all()
+        msg = Message('note_on', note=note, velocity=value)
+        self._port.send(msg)
 
     def send_midi_cc(self, value):
         value = self.float_to_midi(value)
@@ -55,5 +60,7 @@ class Data2Midi:
         self._port.send(msg)
 
     def notes_off_all(self):
-        self._port.send(
-            Message('control_change', control=self.CHANNEL_NOTE_OFF, value=0))
+        if self._port:
+            self._port.send(
+                Message('control_change', control=self.CHANNEL_NOTE_OFF,
+                        value=0))

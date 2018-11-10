@@ -15,7 +15,7 @@ class GrabVideo:
     _rgb_color = [0, 0, 0]
     _hue_delta = 0
     _fps_data = {
-        'start' : None,
+        'start': None,
         'frames': 0
     }
     _saturation = {
@@ -43,7 +43,8 @@ class GrabVideo:
         time_delta = time.seconds + (time.microseconds / 1000000.0)
         print(f'fps={(self._fps_data.get("frames") / time_delta)}')
 
-    def _int_min_max(self, val1, val2):
+    @staticmethod
+    def _int_min_max(val1, val2):
         if val1 >= val2:
             return val2, val1
         else:
@@ -54,7 +55,8 @@ class GrabVideo:
         self._cap.set(4, height)
         self._frame_size = width * height
 
-    def _are_tuple_items_colors(self, tuple_obj: tuple, int_min=COLOR_MIN,
+    @staticmethod
+    def _are_tuple_items_colors(tuple_obj: tuple, int_min=COLOR_MIN,
                                 int_max=COLOR_MAX, tuple_len=3):
         if not isinstance(tuple_obj, tuple) or len(tuple_obj) != tuple_len:
             return False
@@ -70,11 +72,11 @@ class GrabVideo:
         return True
 
     @staticmethod
-    def limit_colors(val, min=COLOR_MIN, max=COLOR_MAX):
-        if val < min:
-            return min
-        elif val > max:
-            return max
+    def limit_colors(val, _min=COLOR_MIN, _max=COLOR_MAX):
+        if val < _min:
+            return _min
+        elif val > _max:
+            return _max
         else:
             return val
 
